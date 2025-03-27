@@ -68,4 +68,22 @@ public class BookingService {
 
         return bookingRepository.save(booking);
     }
+
+    public Booking completeRide(Long bookingId, Long driverId){
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if(!booking.getDriverId().equals(driverId)){
+            throw new RuntimeException("Driver not authorised to complete this ride");
+        }
+
+        booking.setStatus("COMPLETED");
+        bookingRepository.save(booking);
+
+        Driver driver = driverRepository.findById(driverId).orElseThrow(()-> new RuntimeException("Driver not found"));
+        driver.setAvailable(true);
+        driverRepository.save(driver);
+
+        return booking;
+    }
 }
