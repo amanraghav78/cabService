@@ -4,6 +4,7 @@ import com.example.cabservice.dto.CompleteRideRequest;
 import com.example.cabservice.dto.LocationUpdateRequest;
 import com.example.cabservice.entity.Booking;
 import com.example.cabservice.entity.Driver;
+import com.example.cabservice.repository.BookingRepository;
 import com.example.cabservice.repository.DriverRepository;
 import com.example.cabservice.service.BookingService;
 import com.example.cabservice.service.JWTService;
@@ -11,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/driver")
@@ -20,6 +23,7 @@ public class DriverController {
     private final DriverRepository driverRepository;
     private final JWTService jwtService;
     private final BookingService bookingService;
+    private final BookingRepository bookingRepository;
 
     @PutMapping("/location")
     public ResponseEntity<String> updateLocation(@RequestBody LocationUpdateRequest request, HttpServletRequest httpRequest){
@@ -43,5 +47,15 @@ public class DriverController {
 
         Booking completedBooking = bookingService.completeRide(request.getBookingId(), driver.getId());
         return ResponseEntity.ok(completedBooking);
+    }
+
+    @GetMapping("/bookings")
+    public ResponseEntity<List<Booking>> getDriverBookings(HttpServletRequest httpRequest){
+        String token = httpRequest.getHeader("Authorization").substring(7);
+        String email = jwtService.extractEmail(token);
+        Driver driver = driverRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Driver not found"));
+
+        List<Booking> bookings = bookingRepository.findByDriverId(driver.getId());
+        return ResponseEntity.ok(bookings);
     }
 }
